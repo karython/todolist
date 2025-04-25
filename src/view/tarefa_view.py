@@ -5,8 +5,15 @@ from model.tarefa_model import Tarefa
 
 
 def on_add_tarefa_click(e, descricao_input, situacao_input, result_text, tabela_tarefas, atualizar_tabela_tarefas):
-    descricao = descricao_input.value
+    descricao = descricao_input.value.strip()  # Remove espaços em branco no início e no fim
     situacao = situacao_input.value
+
+    # Validação: Verifica se a descrição está vazia
+    if not descricao:
+        result_text.value = "A descrição da tarefa não pode estar vazia."
+        result_text.color = ft.colors.RED
+        result_text.update()
+        return
 
     tarefa_id = cadastrar_tarefa(descricao, situacao)
 
