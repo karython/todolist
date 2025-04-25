@@ -1,0 +1,4 @@
+flet
+sqlalchemy
+pymysql
+python-dotenv
