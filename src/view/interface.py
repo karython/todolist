@@ -272,13 +272,15 @@ class ListaTarefas(ft.Column):
             label="Classe da tarefa",
             value=tarefa.classe.value,
             options=[ft.dropdown.Option(c, c.capitalize()) for c in ["saude", "casa", "trabalho", "lazer"]],
+            expand=True,
         )
         campo_prioridade = ft.Dropdown(
             label="Prioridade",
             value=tarefa.prioridade.value,
             options=[ft.dropdown.Option(p, p.capitalize()) for p in ["alta", "media", "baixa"]],
+            expand=True,
         )
-        campo_descricao = ft.TextField(label="Descrição detalhada", value=tarefa.descricao, multiline=True)
+        campo_descricao = ft.TextField(label="Descrição detalhada", value=tarefa.descricao, multiline=True,expand=True,)
 
         # 🗓️ Inicializar datas
         data_inicio = tarefa.data_inicio
@@ -311,8 +313,8 @@ class ListaTarefas(ft.Column):
 
         self.calendario.on_change = definir_data  # Conecta DatePicker ao diálogo de edição
 
-        btn_inicio.on_click = lambda e: abrir_calendario("inicio")
-        btn_entrega.on_click = lambda e: abrir_calendario("entrega")
+        btn_inicio.on_click = lambda e: abrir_calendario("inicio",expand=True,)
+        btn_entrega.on_click = lambda e: abrir_calendario("entrega",expand=True,)
         atualizar_texto_data()
 
         def salvar_edicao(e):
@@ -337,10 +339,10 @@ class ListaTarefas(ft.Column):
             title=ft.Text("Editar Tarefa"),
             content=ft.Column([
                 campo_nome,
-                 ft.Row([campo_classe,campo_prioridade]),
-                ft.Row([btn_inicio, btn_entrega]),
+                 ft.Row([campo_classe,campo_prioridade],expand=True),
+                ft.Row([btn_inicio, btn_entrega],expand=True),
                 campo_descricao
-            ], scroll="auto"),
+            ],expand=True, scroll="auto"),
             actions=[
                 ft.TextButton("Cancelar", on_click=lambda e: self.fechar_dialogo()),
                 ft.TextButton("Salvar", on_click=salvar_edicao)
@@ -495,11 +497,13 @@ class ListaTarefas(ft.Column):
         self.data_entrega = self.data_inicio + timedelta(days=1)
         self.botao_data_inicio = ft.TextButton(
             text=f"Data de início: {self.data_inicio.strftime('%d/%m/%Y')}",
-            on_click=lambda e: self.abrir_calendario("inicio")
+            on_click=lambda e: self.abrir_calendario("inicio"),
+            expand=True,
         )
         self.botao_data_entrega = ft.TextButton(
             text=f"Data de entrega: {self.data_entrega.strftime('%d/%m/%Y')}",
-            on_click=lambda e: self.abrir_calendario("entrega")
+            on_click=lambda e: self.abrir_calendario("entrega"),
+            expand=True,
         )
         # 🟨 3. Descrição detalhada
         self.campo_descricao = ft.TextField(
