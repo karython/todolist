@@ -1,24 +1,30 @@
-from dotenv import load_dotenv # Importa a função load_dotenv para carregar variáveis de ambiente do arquivo .env
-from sqlalchemy import create_engine # Importa o create_engine para criar uma conexão com o banco de dados
-from sqlalchemy.orm import sessionmaker # Importa sessionmaker para criar sessões de banco de dados
-import os # Importa o módulo os para acessar variáveis de ambiente
+from dotenv import load_dotenv
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, scoped_session
+import os
+from model.tarefa_model import create_tables
 
-from model.tarefa_model import create_tables # Importa a função create_tables do arquivo tarefa_model para criar as tabelas no banco
+load_dotenv()
 
-load_dotenv() # Carrega as variáveis de ambiente do arquivo .env
-
-class Config: # Classe para armazenar as configurações do banco de dados
-        # Obtém as credenciais do banco de dados a partir das variáveis de ambiente
+class Config:
     DB_USER = os.getenv('DB_USER') 
     DB_HOST = os.getenv('DB_HOST')
     DB_NAME = os.getenv('DB_NAME')
     DB_PORT = os.getenv('DB_PORT')
     DB_PASSWORD = os.getenv('DB_PASSWORD')
-    DATABASE_URL = f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'     # Monta a URL de conexão com o banco de dados MySQL usando o driver pymysql
+    DATABASE_URL = f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
 
-engine = create_engine(Config.DATABASE_URL)     # Cria a conxão com o banco de dados usando a URL definida
+# Configura o pool de conexões com limite
+engine = create_engine(
+    Config.DATABASE_URL,
+    pool_size=10,  # Limita o número de conexões simultâneas
+    max_overflow=5,  # Número máximo de conexões extras
+    pool_recycle=3600,  # Recicla conexões após 1 hora
+    pool_timeout=30,  # Tempo limite para obter uma conexão
+)
 
-Session = sessionmaker(autocommit=False, autoflush=False, bind=engine) # Criação de uma sessão.
+# Usa scoped_session para gerenciar sessões reutilizáveis
+Session = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
 
 try:
     with engine.connect() as connection:
