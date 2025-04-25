@@ -1,26 +1,31 @@
-from sqlalchemy.orm import declarative_base
-from sqlalchemy import Column, String, Integer, Boolean, DateTime
-from datetime import datetime
+'''
+src/model/tarefa_model.py
+Define o modelo Tarefa e a criação de tabelas no banco de dados.
+'''
 
+# Importando as bibliotecas necessárias.
+from sqlalchemy.orm import declarative_base
+from sqlalchemy import Column, Text, Integer, Boolean, DateTime
+
+# Criação de uma base declarativa para os modelos
 Base = declarative_base()
 
+# Modelo Tarefa que representa a tabela 'tb_tarefa_taskforce' no banco de dados
+# "Mas o que é uma classe?" - Uma classe é um modelo para criar objetos. Ela define atributos e métodos que os objetos criados a partir dela terão.
 class Tarefa(Base):
-    __tablename__ = "neguebapietro"
+    __tablename__ = 'tb_tarefa_taskforce'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    descricao = Column(String, nullable=False)
-    situacao = Column(Boolean, default=False)
-    data_adicionada = Column(DateTime, nullable=False)  # Substitui data_hora por data_adicionada
-    data_conclusao = Column(DateTime, nullable=True)    # Mantém data_conclusao
+    id = Column(Integer, primary_key=True, autoincrement=True)  # ID único e autoincrementado
+    data = Column(DateTime, nullable=False)  # Data e hora da tarefa, não pode ser nula
+    descricao = Column(Text, nullable=True)  # Descrição da tarefa, pode ser nula
 
-    def __init__(self, descricao, situacao, data_adicionada=None, data_conclusao=None):
+    # Construtor para inicializar a tarefa com descrição e situação
+    # "Mas o que é um construtor?" - É um método especial que é chamado quando um objeto é criado.
+    # Ele é usado para inicializar os atributos do objeto com valores específicos.
+    def __init__(self, data, descricao):
         self.descricao = descricao
-        self.situacao = situacao
-        self.data_adicionada = data_adicionada or datetime.now()
-        self.data_conclusao = data_conclusao
+        self.data = data
 
-    def __repr__(self):
-        return f"<Tarefa(id={self.id}, descricao={self.descricao}, situacao={self.situacao}, data_adicionada={self.data_adicionada}, data_conclusao={self.data_conclusao})>"
-
+# Função para criar as tabelas no banco de dados a partir do modelo
 def create_tables(engine):
-    Base.metadata.create_all(engine)
+    Base.metadata.create_all(engine)  # Gera as tabelas no banco com base nos modelos declarados
