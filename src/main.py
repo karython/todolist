@@ -1,5 +1,17 @@
 import flet as ft
-from view.home import main  # Importe a função main do arquivo home.py
+from view.interface import ListaTarefas  
 
-if __name__ == "__main__":
-    ft.app(target=main)  # Executa o aplicativo Flet, passando a função main como alvo
+
+def main(page: ft.Page):
+    # Configurações da página
+    page.scroll = "always"  # Habilita scroll horizontal e vertical
+    page.horizontal_alignment = ft.CrossAxisAlignment.START  # Alinha o conteúdo à esquerda
+    page.vertical_alignment = ft.MainAxisAlignment.START  # Alinha o conteúdo ao topo
+    page.padding = 20
+    page.auto_scroll = True
+
+    # Adiciona a aplicação principal
+    app = ListaTarefas(page)
+    page.add(app)
+
+ft.app(target=main)
