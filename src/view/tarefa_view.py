@@ -1,213 +1,469 @@
-from services.tarefa_service import cadastrar_tarefa, listar_tarefas, atualizar_tarefa, excluir_tarefa_por_id
+from PIL import Image
+import io
+import base64
 import flet as ft
-from datetime import datetime
+from services.tarefa_service import cadastrar_tarefa, excluir_tarefa, editar_tarefa
+from connection import Session
+from model.tarefa_model import Tarefa
+import datetime
 
-# Função para atualizar a lista de tarefas
-def atualizar_lista_tarefas(tarefas_column, result_text, page):
-    tarefas_column.controls.clear()
+def encode_image_to_base64(path):
+    img = Image.open(path)
+    buffer = io.BytesIO()
+    img.save(buffer, format="PNG")
+    encoded = base64.b64encode(buffer.getvalue()).decode()
+    return f"data:image/png;base64,{encoded}"
 
-    # Calcula o progresso das tarefas
-    tarefas = listar_tarefas()
-    total_tarefas = len(tarefas)
-    tarefas_concluidas = sum(1 for tarefa in tarefas if tarefa.situacao)
-    progresso = tarefas_concluidas / total_tarefas if total_tarefas > 0 else 0
-
-    # Barra de progresso
-    tarefas_column.controls.append(
-        ft.Column(
-            controls=[
-                ft.Text(f"Progresso: {tarefas_concluidas}/{total_tarefas} tarefas concluídas", size=14),
-                ft.ProgressBar(value=progresso, width=400, height=10, color="green"),
-            ],
+class TarefaView:
+    def __init__(self, page: ft.Page):
+        self.page = page
+        self.page.image_src = encode_image_to_base64("src/assets/img/fundo.png")  # Codifica a imagem em base64
+        self.page.image_fit = ft.ImageFit.COVER
+        
+        # Configuração da lista de tarefas com rolagem
+        self.tarefas_list = ft.ListView(
+            expand=True,
             spacing=10,
+            padding=20,
+            auto_scroll=False,
+            width=400  # Largura fixa para centralização
         )
-    )
-
-    # Cabeçalho da tabela
-    tarefas_column.controls.append(
-        ft.Row(
-            controls=[
-                ft.Text("", expand=0),
-                ft.Text("Status e Descrição", weight="bold", expand=4, text_align=ft.TextAlign.LEFT, size=14),
-                ft.Text("Concluída", weight="bold", expand=2, text_align=ft.TextAlign.CENTER, size=14, no_wrap=True),
-                ft.Text("Data Adicionada", weight="bold", expand=3, text_align=ft.TextAlign.CENTER, size=14),
-                ft.Text("Data Conclusão", weight="bold", expand=3, text_align=ft.TextAlign.CENTER, size=14),
-            ],
-            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-            spacing=10,
-            height=50,
+        
+        self.error_text = ft.Text(value="", color="red")
+        self.editing_task_id = None
+    
+    def construir(self):
+        self.page.clean()
+        self.page.padding = 0
+        self.page.spacing = 0
+        
+        # Elementos da UI
+        background_image = ft.Image(
+            src=self.page.image_src,  # Usa a imagem codificada em base64
+            fit=ft.ImageFit.COVER,
+            width=self.page.width,  # Faz a imagem ocupar toda a largura da página
+            height=self.page.height,  # Faz a imagem ocupar toda a altura da página
+            expand=True
         )
-    )
 
-    # Linhas da tabela
-    for tarefa in tarefas:
-        if not tarefa.situacao and tarefa.data_conclusao and tarefa.data_conclusao >= datetime.now():
-            cor_bolinha = "yellow"
-        elif tarefa.situacao:
-            cor_bolinha = "green"
-        else:
-            cor_bolinha = "red"
-
-        tarefas_column.controls.append(
-            ft.Dismissible(
-                key=f"tarefa-{tarefa.id}",
+        # Botão para voltar à tela inicial
+        back_button = ft.Container(
+            width=150,
+            height=self.page.height * 0.08,  # Altura adaptativa baseada no tamanho da página
+            alignment=ft.alignment.center,
+            bgcolor="#6E6E6E",
+            border=ft.border.all(1, "#5C5C5C"),
+            border_radius=ft.border_radius.all(5),
+            shadow=ft.BoxShadow(blur_radius=3, color="black", spread_radius=1),
+            content=ft.ElevatedButton(
                 content=ft.Row(
-                    controls=[
-                        ft.Container(
-                            width=10,
-                            height=10,
-                            bgcolor=cor_bolinha,
-                            border_radius=5,
-                            alignment=ft.alignment.center,
-                            margin=ft.Margin(0, 0, 10, 0),
-                        ),
-                        ft.Text(tarefa.descricao, expand=4, text_align=ft.TextAlign.LEFT, size=12),
-                        ft.Text("Sim" if tarefa.situacao else "Não", expand=2, text_align=ft.TextAlign.CENTER, size=12, no_wrap=True),
-                        ft.Text(
-                            tarefa.data_adicionada.strftime("%d/%m/%Y") if tarefa.data_adicionada else "N/A",
-                            expand=3,
-                            text_align=ft.TextAlign.CENTER,
-                            size=12,
-                        ),
-                        ft.Text(
-                            tarefa.data_conclusao.strftime("%d/%m/%Y") if tarefa.data_conclusao else "N/A",
-                            expand=3,
-                            text_align=ft.TextAlign.CENTER,
-                            size=12,
-                        ),
-                    ],
-                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                    spacing=10,
-                    height=50,
+                    [ft.Text("Voltar", color="white", size=14)],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    spacing=2
                 ),
-                dismiss_direction=ft.DismissDirection.HORIZONTAL,
-                background=ft.Container(
-                    content=ft.Text("Editar", color="white", weight="bold", size=12),
-                    bgcolor="blue",
-                    alignment=ft.alignment.center_left,
-                    padding=ft.Padding(20, 0, 0, 0),
-                ),
-                secondary_background=ft.Container(
-                    content=ft.Text("Excluir", color="white", weight="bold", size=12),
-                    bgcolor="red",
-                    alignment=ft.alignment.center_right,
-                    padding=ft.Padding(0, 0, 20, 0),
-                ),
-                on_dismiss=lambda e, tarefa=tarefa: handle_confirm_dismiss(e, tarefa, tarefas_column, result_text, page),
-            )
+                on_click=lambda e: self.page.go('/inicial'),
+                bgcolor="transparent",
+                color="white",
+                elevation=0
+            ),
+            margin=ft.margin.only(top=5),  # Move o botão mais para cima
+            on_hover=lambda e: self._on_hover(e)
         )
 
-    if tarefas_column.page:
-        tarefas_column.update()
-
-def handle_confirm_dismiss(e, tarefa, tarefas_column, result_text, page):
-    if e.direction == ft.DismissDirection.START_TO_END:
-        abrir_edicao_tarefa(page, tarefa, tarefas_column, result_text)
-    elif e.direction == ft.DismissDirection.END_TO_START:
-        if excluir_tarefa_por_id(tarefa.id):
-            result_text.value = "Tarefa excluída com sucesso!"
-        else:
-            result_text.value = "Erro ao excluir a tarefa."
-        result_text.update()
-        atualizar_lista_tarefas(tarefas_column, result_text, page)
-
-def abrir_edicao_tarefa(page, tarefa, tarefas_column, result_text):
-    data_conclusao = tarefa.data_conclusao.strftime("%Y-%m-%d") if tarefa.data_conclusao else None
-
-    def handle_date_change(ev):
-        nonlocal data_conclusao
-        data_conclusao = ev.control.value.strftime("%Y-%m-%d")
-        result_text.value = f"Data selecionada: {data_conclusao}"
-        if result_text.page:  # Verifica se result_text está associado à página
-            result_text.update()
-
-    descricao_input = ft.TextField(value=tarefa.descricao, label="Editar Descrição", expand=True)
-    situacao_input = ft.Checkbox(value=tarefa.situacao, label="Concluída")
-    date_picker_button = ft.ElevatedButton(
-        "Selecionar Data de Conclusão",
-        icon=ft.icons.CALENDAR_MONTH,
-        on_click=lambda ev: page.open(
-            ft.DatePicker(
-                first_date=datetime(year=2023, month=10, day=1),
-                last_date=datetime(year=2030, month=12, day=31),
-                on_change=handle_date_change,
-            )
-        ),
-    )
-    salvar_button = ft.ElevatedButton(
-        "Salvar",
-        on_click=lambda ev: on_edit_tarefa_click(
-            tarefa.id, descricao_input.value, situacao_input.value, data_conclusao, result_text, tarefas_column, page
-        )
-    )
-
-    # Adiciona os controles de edição em duas linhas
-    tarefas_column.controls.append(
-        ft.Column(
+        # Substitui o Container por um Column para suportar o botão "Voltar" e "Excluir"
+        main_content = ft.Column(
             controls=[
-                ft.Row([descricao_input, situacao_input], spacing=10),
-                ft.Row([date_picker_button, salvar_button], spacing=10),
+                ft.Container(
+                    content=self.tarefas_list,
+                    height=self.page.height * 0.25,  # Reduz a altura da lista para subir os botões
+                    alignment=ft.alignment.center,
+                    margin=ft.margin.symmetric(horizontal=20, vertical=1),  # Adiciona margem vertical para mover mais para cima
+                    border_radius=10,
+                    padding=5
+                ),
+                self._create_footer(),
+                back_button  # Adiciona o botão "Voltar"
             ],
-            spacing=10,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,  # Centraliza horizontalmente
+            scroll=ft.ScrollMode.AUTO,
+            expand=True,
+            spacing=2  # Reduz ainda mais o espaçamento entre os elementos
         )
-    )
-    tarefas_column.update()
+        
+        # Adiciona apenas o main_content à página
+        self.page.controls.clear()
+        self.page.add(ft.Stack([background_image, main_content]))  # Remove a imagem à direita
+        self.page.update()  # Atualiza a página para refletir as mudanças
 
-def on_add_tarefa_click(e, descricao_input, data_conclusao, result_text, tarefas_column):
-    descricao = descricao_input.value.strip()
-    situacao = False
-    data_adicionada = datetime.now()
+        # Atualiza a lista de tarefas após adicionar o main_content
+        self.atualizar_lista_tarefas()
 
-    try:
-        if isinstance(data_conclusao, str):
-            data_conclusao = datetime.strptime(data_conclusao.strip(), "%Y-%m-%d")
+        return ft.Stack([background_image, main_content])
+    
+    def _create_footer(self):
+        """Cria o rodapé centralizado com o botão de excluir"""
+        return ft.Container(
+            content=ft.Row(
+                [
+                    ft.Container(
+                        width=120,
+                        height=self.page.height * 0.08,  # Altura adaptativa baseada no tamanho da página
+                        alignment=ft.alignment.center,
+                        bgcolor="#6E6E6E",
+                        border=ft.border.all(1, "#5C5C5C"),
+                        border_radius=ft.border_radius.all(5),
+                        shadow=ft.BoxShadow(blur_radius=5, color="black", spread_radius=1),
+                        content=ft.ElevatedButton(
+                            content=ft.Row(
+                                [
+                                    ft.Text("X", font_family="Mine 2", size=20, color="white"),
+                                    ft.Text("Excluir", font_family="Mine", size=14, color="white")
+                                ],
+                                alignment=ft.MainAxisAlignment.CENTER,
+                                spacing=10
+                            ),
+                            on_click=self.on_excluir_tarefa_click,  # Corrige o evento do botão
+                            bgcolor="transparent",
+                            color="white",
+                            elevation=0
+                        ),
+                        on_hover=lambda e: self._on_hover(e)  # Adiciona o evento de hover
+                    )
+                ],
+                alignment=ft.MainAxisAlignment.CENTER
+            ),
+            padding=ft.padding.only(top=1)  # Espaço acima do botão
+        )
+
+    def _on_hover(self, e):
+        """Função para lidar com o hover nos botões"""
+        if e.data == "true":  # Quando o mouse está sobre o botão
+            e.control.bgcolor = "#8A8A8A"  # Torna o botão mais claro
+        else:  # Quando o mouse sai do botão
+            e.control.bgcolor = "#6E6E6E"  # Retorna à cor original
+        e.control.update()
+
+    def atualizar_lista_tarefas(self, apenas_vencidas=False):
+        """Atualiza a lista de tarefas centralizadas"""
+        self.editing_task_id = None
+        session = Session()
+        
+        try:
+            self.tarefas_list.controls.clear()
+
+            # Filtra as tarefas com base no parâmetro `apenas_vencidas`
+            query = session.query(Tarefa).order_by(
+                Tarefa.dt.is_(None),  # Coloca os valores NULL no final
+                Tarefa.dt == "0000-00-00",  # Coloca as tarefas "Sem prazo" no final
+                Tarefa.dt.asc()       # Ordena as datas em ordem crescente
+            )
+            todas_tarefas = query.all()
+
+            for tarefa in todas_tarefas:
+                def on_checkbox_change(e, tarefa_container):
+                    tarefa_container.bgcolor = "#5A5A5A" if e.control.value else "#6E6E6E"
+                    tarefa_container.update()
+
+                # Converte a data para datetime.date se necessário
+                if isinstance(tarefa.dt, str):
+                    try:
+                        tarefa.dt = datetime.datetime.strptime(tarefa.dt, "%Y-%m-%d").date()
+                    except ValueError:
+                        tarefa.dt = None
+
+                # Define a cor do texto com base na data de vencimento
+                if tarefa.dt == datetime.date(1, 1, 1):  # Data "0000-00-00" é interpretada como 0001-01-01
+                    text_color = "white"
+                    show_red_line = False
+                    show_yellow_line = False
+                    data_text = "Sem prazo"
+                elif tarefa.dt and tarefa.dt < datetime.date.today():
+                    text_color = "#FF0000"  # Vermelho para tarefas atrasadas
+                    show_red_line = True
+                    show_yellow_line = False
+                    data_text = tarefa.dt.strftime('%d/%m/%Y')
+                elif tarefa.dt and tarefa.dt == datetime.date.today():
+                    text_color = "#FFFF00"  # Amarelo para tarefas com data igual à data corrente
+                    show_red_line = False
+                    show_yellow_line = True
+                    data_text = tarefa.dt.strftime('%d/%m/%Y')
+                else:
+                    text_color = "white"
+                    show_red_line = False
+                    show_yellow_line = False
+                    data_text = tarefa.dt.strftime('%d/%m/%Y') if tarefa.dt else "Sem prazo"
+
+                # Container da tarefa centralizado
+                tarefa_container = ft.Container(
+                    content=ft.Column(
+                        [
+                            ft.Row(
+                                [
+                                    ft.Container(
+                                        content=ft.Text(
+                                            f"{tarefa.descricao}",
+                                            size=14,
+                                            text_align="start",  # Alinha o texto à esquerda
+                                            color=text_color,  # Cor do texto
+                                            max_lines=2,  # Permite até 2 linhas para a descrição
+                                            overflow="ellipsis",  # Adiciona reticências se o texto for muito longo
+                                        ),
+                                        on_click=lambda e, t=tarefa: self.abrir_edicao_tarefa(e, t),
+                                        alignment=ft.alignment.center_left,  # Move o texto mais para a esquerda
+                                        expand=True,  # Faz o texto ocupar o espaço disponível
+                                        padding=ft.padding.only(left=5)  # Adiciona um pequeno padding à esquerda
+                                    ),
+                                    ft.Container(
+                                        content=ft.Text(
+                                            data_text,  # Exibe a data ou "Sem prazo"
+                                            size=14,
+                                            text_align="center",  # Centraliza o texto
+                                            color=text_color,  # Cor do texto
+                                            no_wrap=True  # Garante que a data não quebre a linha
+                                        ),
+                                        # Desabilita a edição da data se a tarefa estiver vencida
+                                        on_click=None if (tarefa.dt and tarefa.dt < datetime.date.today()) else lambda e, t=tarefa: self.abrir_edicao_data(e, t),
+                                        alignment=ft.alignment.center,  # Centraliza o campo da data
+                                        width=120  # Define uma largura fixa para a data
+                                    )
+                                ],
+                                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,  # Garante espaçamento entre os itens
+                                expand=True  # Faz a linha ocupar toda a largura disponível
+                            ),
+                            # Adiciona uma linha vermelha ou amarela abaixo, se necessário
+                            ft.Container(
+                                height=2,
+                                bgcolor="#FF0000" if show_red_line else "#FFFF00" if show_yellow_line else "transparent",
+                                visible=show_red_line or show_yellow_line  # Exibe apenas para tarefas atrasadas ou com data corrente
+                            )
+                        ]
+                    ),
+                    padding=ft.padding.all(5),
+                    bgcolor="#6E6E6E",  # Cinza para todas as caixas
+                    border=ft.border.all(1, "#5C5C5C"),
+                    border_radius=ft.border_radius.all(5),
+                    shadow=ft.BoxShadow(blur_radius=5, color="black", spread_radius=1),
+                    alignment=ft.alignment.center,
+                    expand=True  # Faz o container ocupar toda a largura disponível
+                )
+
+                # Linha da tarefa centralizada
+                tarefa_row = ft.Row(
+                    [
+                        ft.Checkbox(
+                            value=False,
+                            data=tarefa.id,
+                            fill_color="#5A5A5A",
+                            on_change=lambda e, tc=tarefa_container: on_checkbox_change(e, tc)
+                        ),
+                        tarefa_container
+                    ],
+                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN  # Ajusta o alinhamento para exibir a checkbox
+                )
+                
+                # Container para centralizar a linha da tarefa
+                centered_row = ft.Container(
+                    content=tarefa_row,
+                    alignment=ft.alignment.center,
+                    padding=ft.padding.symmetric(horizontal=10)  # Reduz a margem horizontal
+                )
+                
+                self.tarefas_list.controls.append(centered_row)
+
+            self.tarefas_list.update()
+
+        finally:
+            session.close()
+
+    def abrir_edicao_tarefa(self, e, tarefa):
+        if self.editing_task_id is not None and self.editing_task_id != tarefa.id:
+            return  # Impede abrir outro campo de edição se já houver um aberto
+
+        self.editing_task_id = tarefa.id  # Define a tarefa atual como em edição
+        descricao_input = ft.TextField(
+            width=271,  # Largura fixa para o campo de descrição
+            bgcolor="black",  # Cor de fundo preto
+            border_color="white",  # Cor da borda branca
+            value=tarefa.descricao,
+            expand=False,  # Remove o comportamento de expansão para alinhar melhor
+            text_align="start",  # Alinha o texto à esquerda
+            autofocus=True,  # Foca automaticamente no campo ao editar
+            multiline=True,  # Permite múltiplas linhas
+            max_lines=None  # Sem limite de linhas
+        )
+        error_text = ft.Text(value="", color="white", weight="bold")  # Alterado para branco
+        spacing_between_buttons = 38  # Variável para controlar o espaçamento entre os botões
+
+        # Remove todas as checkboxes para expandir a caixa de edição
+        for item in self.tarefas_list.controls:
+            if isinstance(item.content, ft.Row):
+                row = item.content
+                row.controls = [control for control in row.controls if not isinstance(control, ft.Checkbox)]
+                row.update()
+
+        def salvar_edicao(e):
+            if descricao_input.value.strip() == "":
+                error_text.value = "O CAMPO NÃO PODE SER VAZIO."
+                error_text.update()  # Atualiza o texto de erro na tela
+            else:
+                # Chama a função de edição da tarefa
+                resultado = editar_tarefa(tarefa.id, descricao_input.value)
+                
+                if isinstance(resultado, str) and resultado == "Tarefa já existe.":
+                    error_text.value = "ERRO: TAREFA JÁ EXISTE."
+                    error_text.update()  # Atualiza o texto de erro na tela
+                elif "editada com sucesso" in resultado:
+                    self.editing_task_id = None  # Libera a edição após salvar
+                    self.atualizar_lista_tarefas()  # Atualiza a lista de tarefas
+                else:
+                    error_text.value = resultado  # Exibe qualquer outro erro retornado
+                    error_text.update()
+
+        def cancelar_edicao(e):
+            self.editing_task_id = None  # Libera a edição ao cancelar
+            self.atualizar_lista_tarefas()  # Atualiza a lista de tarefas
+        
+        tarefa_row = e.control.parent
+        tarefa_row.controls.clear()  # Limpa os controles para adicionar os novos
+        tarefa_row.controls.append(
+            ft.Column(
+                [
+                    descricao_input,
+                    error_text,  # Adiciona o texto de erro abaixo do campo de entrada
+                    ft.Row(
+                        [
+                            ft.Container(
+                                width=100,
+                                height=40,  # Define altura menor para tornar o botão mais compacto
+                                alignment=ft.alignment.center,  # Centraliza o conteúdo do botão
+                                bgcolor="green",  # Define a cor de fundo do container
+                                border_radius=ft.border_radius.all(5),  # Adiciona um leve arredondamento
+                                content=ft.ElevatedButton(
+                                    content=ft.Text("Salvar", font_family="Mine", size=12),  # Ícone de edição
+                                    bgcolor="transparent",  # Torna o botão transparente para usar o fundo do container
+                                    color="white",
+                                    elevation=0,  # Remove a elevação para alinhar com o container
+                                    on_click=salvar_edicao  # Chama a função de salvar
+                                )
+                            ),
+                            ft.Container(width=spacing_between_buttons),  # Espaçamento configurável entre os botões
+                            ft.Container(
+                                width=100,
+                                height=40,  # Define altura menor para tornar o botão mais compacto
+                                alignment=ft.alignment.center,  # Centraliza o conteúdo do botão
+                                bgcolor="red",  # Define a cor de fundo do container
+                                border_radius=ft.border_radius.all(5),  # Adiciona um leve arredondamento
+                                content=ft.ElevatedButton(
+                                    content=ft.Text("Cancelar", font_family="Mine", size=12),  # Ícone de cancelar
+                                    bgcolor="transparent",  # Torna o botão transparente para usar o fundo do container
+                                    color="white",
+                                    elevation=0,  # Remove a elevação para alinhar com o container
+                                    on_click=cancelar_edicao  # Chama a função de cancelar
+                                )
+                            )
+                        ],
+                        alignment=ft.MainAxisAlignment.START  # Alinha os botões no início, com o espaçamento fixo
+                    )
+                ],
+                alignment=ft.MainAxisAlignment.CENTER  # Centraliza o conteúdo verticalmente
+            )
+        )
+        tarefa_row.update()
+
+
+    def abrir_edicao_data(self, e, tarefa):
+        """Abre o calendário para editar a data da tarefa"""
+        def on_date_selected(e):
+            if e.control.value:
+                nova_data = e.control.value.strftime("%Y-%m-%d")
+                self.atualizar_data_tarefa(tarefa.id, nova_data)
+
+        self.page.open(
+            ft.DatePicker(
+                first_date=datetime.date.today(),
+                last_date=datetime.date(2026, 12, 31),
+                on_change=on_date_selected
+            )
+        )
+
+    def atualizar_data_tarefa(self, tarefa_id, nova_data):
+        """Atualiza a data da tarefa no banco de dados"""
+        session = Session()
+        try:
+            tarefa = session.query(Tarefa).filter(Tarefa.id == tarefa_id).first()
+            if tarefa:
+                tarefa.dt = datetime.datetime.strptime(nova_data, "%Y-%m-%d").date()
+                session.commit()
+                self.atualizar_lista_tarefas()
+        except Exception as e:
+            print(f"Erro ao atualizar a data da tarefa: {e}")
+            session.rollback()
+        finally:
+            session.close()
+
+    def on_excluir_tarefa_click(self, e):
+        """Exclui as tarefas marcadas"""
+        tarefas_marcadas = []
+        for item in self.tarefas_list.controls:
+            if isinstance(item.content, ft.Row):
+                row = item.content
+                for control in row.controls:
+                    if isinstance(control, ft.Checkbox) and control.value:  # Verifica se a checkbox está marcada
+                        tarefas_marcadas.append(control.data)
+
+        if tarefas_marcadas:
+            def confirmar_exclusao(e):
+                erros = []
+                for tarefa_id in tarefas_marcadas:
+                    resultado = excluir_tarefa(tarefa_id)
+                    if not isinstance(resultado, str) or "sucesso" not in resultado.lower():
+                        erros.append(tarefa_id)
+
+                self.fechar_dialog(dialog)
+
+                if erros:
+                    self.mostrar_dialogo_erro(f"Erro ao excluir as tarefas: {', '.join(map(str, erros))}")
+                else:
+                    self.atualizar_lista_tarefas()
+
+            def cancelar_exclusao(e):
+                self.fechar_dialog(dialog)
+
+            # Criação do pop-up de confirmação
+            dialog = ft.AlertDialog(
+                modal=True,
+                title=ft.Text("CONFIRMAR EXCLUSÃO", color="red", weight="bold"),
+                content=ft.Text(f"Você tem certeza que deseja excluir {len(tarefas_marcadas)} tarefa(s) selecionada(s)?", weight="bold"),
+                actions=[
+                    ft.TextButton("SIM", on_click=confirmar_exclusao),
+                    ft.TextButton("NÃO", on_click=cancelar_exclusao)
+                ],
+                actions_alignment=ft.MainAxisAlignment.END,
+            )
+
+            # Abre o diálogo
+            self.page.dialog = dialog
+            dialog.open = True
+            self.page.add(dialog)
+            self.page.update()
         else:
-            raise ValueError("Data de conclusão inválida.")
-    except ValueError:
-        result_text.value = "Data de conclusão inválida. Use o formato dd/mm/yyyy."
-        result_text.color = "red"
-        if result_text.page:  # Verifica se result_text está associado à página
-            result_text.update()
-        return
+            # Criação do pop-up de erro
+            self.mostrar_dialogo_erro("Nenhuma tarefa selecionada. Por favor, selecione pelo menos uma tarefa para excluir.")
 
-    if not descricao:
-        result_text.value = "Por favor, escreva uma descrição para a tarefa."
-        result_text.color = "red"
-        if result_text.page:  # Verifica se result_text está associado à página
-            result_text.update()
-        return
+    def mostrar_dialogo_erro(self, mensagem):
+        dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text("ERRO", color="red", weight="bold"),
+            content=ft.Text(mensagem, weight="bold"),
+            actions=[
+                ft.TextButton("OK", on_click=lambda e: self.fechar_dialog(dialog))
+            ],
+        )
+        self.page.dialog = dialog
+        dialog.open = True
+        self.page.add(dialog)
+        self.page.update()
 
-    tarefa = cadastrar_tarefa(descricao, situacao, data_adicionada, data_conclusao)
-    if tarefa:
-        result_text.value = "Tarefa cadastrada com sucesso!"
-        result_text.color = "green"
-        descricao_input.value = ""
-        descricao_input.update()
-        atualizar_lista_tarefas(tarefas_column, result_text, None)
-    else:
-        result_text.value = "Erro ao cadastrar a tarefa."
-        result_text.color = "red"
-
-    if result_text.page:  # Verifica se result_text está associado à página
-        result_text.update()
-
-def on_edit_tarefa_click(tarefa_id, nova_descricao, nova_situacao, nova_data_conclusao, result_text, tarefas_column, page):
-    try:
-        nova_data_conclusao = datetime.strptime(nova_data_conclusao.strip(), "%Y-%m-%d")
-    except ValueError:
-        result_text.value = "Data de conclusão inválida. Use o formato dd/mm/yyyy."
-        result_text.color = "red"
-        if result_text.page:  # Verifica se result_text está associado à página
-            result_text.update()
-        return
-
-    if atualizar_tarefa(tarefa_id, nova_descricao, nova_situacao, nova_data_conclusao):
-        result_text.value = "Tarefa atualizada com sucesso!"
-        result_text.color = "green"
-    else:
-        result_text.value = "Erro ao atualizar a tarefa."
-        result_text.color = "red"
-
-    if result_text.page:  # Verifica se result_text está associado à página
-        result_text.update()
-    atualizar_lista_tarefas(tarefas_column, result_text, page)
+    def fechar_dialog(self, dialog):
+        dialog.open = False
+        self.page.update()
