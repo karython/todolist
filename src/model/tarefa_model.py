@@ -5,7 +5,7 @@ from sqlalchemy import Column, Text, Integer, Boolean
 Base = declarative_base()
 
 class Tarefa(Base):
-    __tablename__ = 'tb_tarefa'
+    __tablename__ = 'tb_tarefas_pietroenegueba'
 
     id = Column(Integer, primary_key=True ,autoincrement=True)
     descricao = Column(Text, nullable=True)

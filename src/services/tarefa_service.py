@@ -25,3 +25,48 @@ def cadastrar_tarefa(descricao: str, situacao: bool):
     finally:
         # Fechar a sessão após a operação
         session.close()
+
+
+def excluir_tarefa(tarefa_id):
+    session = Session()
+    try:
+
+        exc_tarefa = session.query(Tarefa).filter(Tarefa.id == tarefa_id).first()
+        
+        if exc_tarefa:
+            session.delete(exc_tarefa)
+            session.commit()
+            return f'Tarefa excluida com sucesso'
+        else:
+            return f'Tarefa não encontrada'
+
+    except Exception as e:
+        # rollback
+        session.rollback()
+        return f'Erro ao excluir tarefa {e}'
+    finally:
+        # fechar a conexao
+        session.close()
+
+def editar_tarefa(tarefa_id: int, nova_descricao: str, nova_situacao: bool):
+    session = Session()
+    try:
+        tarefa = session.query(Tarefa.id == tarefa_id).first()
+
+        if not tarefa:
+            return 'Tarefa não encontrada!'
+
+        # atualizar os valores no banco  
+        tarefa.descricao = nova_descricao
+        tarefa.situacao = nova_situacao
+
+        
+        session.commit()
+
+        return f'Tarefa {tarefa_id} atualizada com sucesso!'
+    
+    except Exception as e:
+        session.rollback()
+        return f'Erro ao editar tarefa {e}'
+    finally:
+        session.close()

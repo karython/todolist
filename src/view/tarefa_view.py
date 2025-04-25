@@ -1,4 +1,4 @@
-from services.tarefa_service import cadastrar_tarefa
+from services.tarefa_service import cadastrar_tarefa, excluir_tarefa, editar_tarefa
 import flet as ft
 from sqlalchemy.orm import sessionmaker
 from connection import Session
@@ -50,3 +50,41 @@ def on_add_tarefa_click(e, descricao_input, situacao_input, result_text, tarefas
     
     # Atualiza o texto na tela
     result_text.update()
+
+def on_excluir_tarefa_click(e, tarefa_id, tarefas_column):
+    excluir_tarefa(tarefa_id)
+    atualizar_lista_tarefas(tarefas_column)
+
+
+
+
+def modal_editar(page, tarefa, tarefa_column):
+    descricao_input = ft.TextField(label='Nova Descrição', value=tarefa.descricao)
+    situacao_input = ft.Checkbox(label='Concluida', value=tarefa.situacao)
+
+
+    def salvar_edicao(e):
+        editar_tarefa(tarefa.id, descricao_input.value, situacao_input.value)
+        page.dialog.open = False
+        page.update()
+        atualizar_lista_tarefas(tarefa_column)
+
+        modal = ft.AlertDialog(
+            title=ft.Text('Editar Tarefa'),
+            content=ft.Column([
+                descricao_input,
+                situacao_input
+            ]),
+            actions=[
+                ft.TextButton('Salvar', on_click=salvar_edicao),
+                ft.TextButton('Cancelar', on_click=lambda e: fechar_modal(page))
+            ]
+        )
+
+        page.dialog = modal
+        modal.open = True
+        page.update()
+
+def fechar_modal(page):
+    page.dialog.open = False
+    page.update()
