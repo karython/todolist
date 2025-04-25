@@ -1,27 +1,31 @@
 [project]
-name = "tarefa"
+name = "todolist"
 version = "0.1.0"
-description = ""
+description = "To Do List feita em Python, Flet e Banco de dados"
 readme = "README.md"
 requires-python = ">=3.9"
 authors = [
-    { name = "Flet developer", email = "you@example.com" }
+    { name = "Philipi José",      email = "philipi.rodrigues342@gmail.com" },
+    { name = "Guilherme Valadão", email = "valadaodenovo@gmail.com"        }
 ]
 dependencies = [
-  "flet==0.27.6"
+  "flet==0.27.6",
+  "SQLAlchemy==2.0.38",
+  "python-dotenv==1.0.1",
+  "PyMySQL==1.1.1"
 ]
 
 [tool.flet]
 # org name in reverse domain name notation, e.g. "com.mycompany".
 # Combined with project.name to build bundle ID for iOS and Android apps
-org = "com.mycompany"
+org = "com.Philipi"
 
 # project display name that is used as an app title on Android and iOS home screens,
 # shown in window titles and about app dialogs on desktop.
-product = "tarefa"
+product = "todolist"
 
 # company name to display in about app dialogs
-company = "Flet"
+company = "Philipi"
 
 # copyright text to display in about app dialogs
 copyright = "Copyright (C) 2025 by Flet"
@@ -39,3 +43,14 @@ package-mode = false
 
 [tool.poetry.group.dev.dependencies]
 flet = {extras = ["all"], version = "0.27.6"}
+
+[tool.briefcase]
+project_name = "todolist"
+license = "MIT"
+formal_name = "To Do List Philipi Valadão"
+bundle = "com.Philipi.todolist"
+sources = ["src"]
+description = "To Do List feita em Python, Flet e Banco de dados"
+version = "0.1.0"
+
+[tool.briefcase.app.src]

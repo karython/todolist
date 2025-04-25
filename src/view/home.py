@@ -1,30 +1,38 @@
 import flet as ft
-from view.tarefa_view import on_add_tarefa_click, atualizar_lista_tarefas
+from view.Page1 import Page1
+from view.Page2 import Page2
+from view.InitialPage import InitialPage
+
 
 def main(page: ft.Page):
-    page.title = "Cadastro de Tarefa"
-    page.vertical_alignment = ft.MainAxisAlignment.CENTER
+    page.title = "ToDo List"
+    page.vertical_alignment = ft.MainAxisAlignment.START
 
-    # Campo de entrada para a descrição da tarefa
-    descricao_input = ft.TextField(label="Descrição da Tarefa", autofocus=True, width=300)
+    page.fonts = {"MarioTitle": '/fonts/RetroMario.otf',
+                  "MarioText": '/fonts/SMW_TextBox.ttf'}
     
-    # Campo de entrada para a situação (Checkbox)
-    situacao_input = ft.Checkbox(label="Tarefa concluída", value=False)
-    
-    # Botão para adicionar a tarefa
-    add_button = ft.ElevatedButton("Cadastrar Tarefa", on_click=lambda e: on_add_tarefa_click(e, descricao_input, situacao_input, result_text, tarefas_column))
-    
-    # Área de resultado (onde será mostrado se a tarefa foi cadastrada ou não)
-    result_text = ft.Text()
+    page.theme = ft.Theme(font_family="MarioText")
 
-    # Coluna para exibir a lista de tarefas
-    tarefas_column = ft.Column()
+    # Função para construir a página com base na rota
+    def cons_route(e):
+        page.clean()  # Limpa os controles da página
+        if page.route == "/inicio":
+            initial_page = InitialPage(page)
+            initial_page.construir()
+        elif page.route == "/cadastro":
+            page1 = Page1(page)
+            page1.construir()
+        elif page.route == "/listagem":
+            page2 = Page2(page)
+            page2.construir()
+        else:
+            page.go("/inicio")  # Redireciona para a rota padrão
+        page.update()
 
-    # Adiciona todos os componentes na página
-    page.add(descricao_input, situacao_input, add_button, result_text, tarefas_column)
 
-    # Inicializa a lista de tarefas
-    atualizar_lista_tarefas(tarefas_column)
+    # Define a rota inicial e o callback para alteração de rota
+    page.route = "/inicio"
+    page.on_route_change = cons_route
 
-# Inicia o aplicativo Flet
-ft.app(target=main)
+    cons_route(None)
+    page.update()

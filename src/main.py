@@ -1,5 +1,4 @@
 import flet as ft
-from view.home import main  # Importe a função main do arquivo home.py
+from view.home import main
 
-if __name__ == "__main__":
-    ft.app(target=main)  # Executa o aplicativo Flet, passando a função main como alvo
+ft.app(target=main, assets_dir="assets") # Inicia o aplicativo Flet com o diretório de ativos especificado

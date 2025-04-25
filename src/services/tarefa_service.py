@@ -8,14 +8,16 @@ def cadastrar_tarefa(descricao: str, situacao: bool):
         # Criar uma nova instância do modelo Tarefa com os dados fornecidos
         nova_tarefa = Tarefa(descricao=descricao, situacao=situacao)
         session = Session()
-        # Adicionar a tarefa na sessão
-        session.add(nova_tarefa)
-        
-        # Commit para salvar a tarefa no banco de dados
-        session.commit()
-        
-        # Retorna o objeto Tarefa inserido
-        return nova_tarefa
+        if descricao != '':
+            # Adicionar a tarefa na sessão
+            session.add(nova_tarefa)
+            
+            # Commit para salvar a tarefa no banco de dados
+            session.commit()
+            
+            # Retorna o objeto Tarefa inserido
+            session.refresh(nova_tarefa)
+            return nova_tarefa
 
     except SQLAlchemyError as e:
         # Caso ocorra um erro, faz o rollback
