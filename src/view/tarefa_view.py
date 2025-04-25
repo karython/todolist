@@ -40,12 +40,14 @@ def on_excluir_tarefa_click(e, id_tarefa, result_text, tabela_tarefas, atualizar
             result_text.value = f"Erro ao excluir tarefa."
             result_text.color = ft.colors.RED
 
-        result_text.update()
-        e.page.close(cupertino_alert_dialog)
+        # Adiciona o result_text à página antes de chamar update()
+        e.page.add(result_text)  # Garante que o result_text está na página
+        result_text.update()  # Agora podemos atualizar o result_text sem erro
+        e.page.close(cupertino_alert_dialog)  # Fecha o popup após a confirmação
         e.page.update()
 
     def cancelar_exclusao(e):
-        e.page.close(cupertino_alert_dialog)
+        e.page.close(cupertino_alert_dialog)  # Fecha o popup ao cancelar
         e.page.update()
 
     cupertino_alert_dialog = ft.CupertinoAlertDialog(

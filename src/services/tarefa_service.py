@@ -38,10 +38,10 @@ def excluir_tarefa(id_tarefa: int):
             # Deletar a tarefa encontrada
             session.delete(tarefa)
             session.commit()
-            print(f"Tarefa com id {id_tarefa} excluída com sucesso!")
+            print(f"Tarefa excluída com sucesso!")
             return True
         else:
-            print(f"Tarefa com id {id_tarefa} não encontrada.")
+            print(f"Tarefa não encontrada.")
             return False
         
     except SQLAlchemyError as e:
