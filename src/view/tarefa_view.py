@@ -282,79 +282,84 @@ class TarefaView:
         self.editing_task_id = tarefa.id  # Define a tarefa atual como em edição
         descricao_input = ft.TextField(
             value=tarefa.descricao,
-            expand=False,  # Remove o comportamento de expansão para alinhar melhor
-            text_align="start",  # Alinha o texto à esquerda
-            autofocus=True,  # Foca automaticamente no campo ao editar
-            multiline=True,  # Permite múltiplas linhas
-            max_lines=None  # Sem limite de linhas
+            expand=True,  # Faz o campo ocupar todo o espaço horizontal
+            text_align="start",
+            autofocus=True,
+            multiline=True,
+            max_lines=None,
+            height=80,  # Define uma altura fixa para o campo
+            bgcolor="black",  # Fundo preto
+            color="white"  # Texto branco
         )
-        error_text = ft.Text(value="", color="white", weight="bold")  # Alterado para branco
+        error_text = ft.Text(value="", color="white", weight="bold")
 
         def salvar_edicao(e):
             if descricao_input.value.strip() == "":
                 error_text.value = "O CAMPO NÃO PODE SER VAZIO."
-                error_text.update()  # Atualiza o texto de erro na tela
+                error_text.update()
             else:
-                # Chama a função de edição da tarefa
                 resultado = editar_tarefa(tarefa.id, descricao_input.value)
-                
                 if isinstance(resultado, str) and resultado == "Tarefa já existe.":
                     error_text.value = "ERRO: TAREFA JÁ EXISTE."
-                    error_text.update()  # Atualiza o texto de erro na tela
+                    error_text.update()
                 elif "editada com sucesso" in resultado:
-                    self.editing_task_id = None  # Libera a edição após salvar
-                    self.atualizar_lista_tarefas()  # Atualiza a lista de tarefas
+                    self.editing_task_id = None
+                    self.atualizar_lista_tarefas()
                 else:
-                    error_text.value = resultado  # Exibe qualquer outro erro retornado
+                    error_text.value = resultado
                     error_text.update()
 
         def cancelar_edicao(e):
-            self.editing_task_id = None  # Libera a edição ao cancelar
-            self.atualizar_lista_tarefas()  # Atualiza a lista de tarefas
-        
+            self.editing_task_id = None
+            self.atualizar_lista_tarefas()
+
         tarefa_row = e.control.parent
-        tarefa_row.controls.clear()  # Limpa os controles para adicionar os novos
+        tarefa_row.controls.clear()
         tarefa_row.controls.append(
-            ft.Column(
-                [
-                    descricao_input,
-                    error_text,  # Adiciona o texto de erro abaixo do campo de entrada
-                    ft.Row(
-                        [
-                            ft.Container(
-                                width=100,
-                                height=40,  # Define altura menor para tornar o botão mais compacto
-                                alignment=ft.alignment.center,  # Centraliza o conteúdo do botão
-                                bgcolor="green",  # Define a cor de fundo do container
-                                border_radius=ft.border_radius.all(5),  # Adiciona um leve arredondamento
-                                content=ft.ElevatedButton(
-                                    content=ft.Text("Salvar", font_family="Mine", size=12),  # Ícone de edição
-                                    bgcolor="transparent",  # Torna o botão transparente para usar o fundo do container
-                                    color="white",
-                                    elevation=0,  # Remove a elevação para alinhar com o container
-                                    on_click=salvar_edicao  # Chama a função de salvar
-                                )
-                            ),
-                            ft.Container(width=50),  # Adiciona um espaçamento fixo entre os botões
-                            ft.Container(
-                                width=100,
-                                height=40,  # Define altura menor para tornar o botão mais compacto
-                                alignment=ft.alignment.center,  # Centraliza o conteúdo do botão
-                                bgcolor="red",  # Define a cor de fundo do container
-                                border_radius=ft.border_radius.all(5),  # Adiciona um leve arredondamento
-                                content=ft.ElevatedButton(
-                                    content=ft.Text("Cancelar", font_family="Mine", size=12),  # Ícone de cancelar
-                                    bgcolor="transparent",  # Torna o botão transparente para usar o fundo do container
-                                    color="white",
-                                    elevation=0,  # Remove a elevação para alinhar com o container
-                                    on_click=cancelar_edicao  # Chama a função de cancelar
-                                )
+            ft.Container(
+                content=ft.Column(
+                    [
+                        descricao_input,
+                        error_text,
+                        ft.Container(
+                            width=120,
+                            height=50,
+                            alignment=ft.alignment.center,
+                            bgcolor="green",
+                            border_radius=ft.border_radius.all(5),
+                            content=ft.ElevatedButton(
+                                content=ft.Text("Salvar", font_family="Mine", size=14),
+                                bgcolor="transparent",
+                                color="white",
+                                elevation=0,
+                                on_click=salvar_edicao
                             )
-                        ],
-                        alignment=ft.MainAxisAlignment.START  # Alinha os botões no início, com o espaçamento fixo
-                    )
-                ],
-                alignment=ft.MainAxisAlignment.CENTER  # Centraliza o conteúdo verticalmente
+                        ),
+                        ft.Container(
+                            width=120,
+                            height=50,
+                            alignment=ft.alignment.center,
+                            bgcolor="red",
+                            border_radius=ft.border_radius.all(5),
+                            content=ft.ElevatedButton(
+                                content=ft.Text("Cancelar", font_family="Mine", size=14),
+                                bgcolor="transparent",
+                                color="white",
+                                elevation=0,
+                                on_click=cancelar_edicao
+                            )
+                        )
+                    ],
+                    spacing=10,  # Espaçamento entre os elementos
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    expand=True  # Faz o conteúdo ocupar todo o espaço disponível
+                ),
+                padding=ft.padding.all(10),  # Adiciona padding ao redor do container
+                bgcolor="#6E6E6E",  # Cor de fundo do container
+                border=ft.border.all(1, "#5C5C5C"),
+                border_radius=ft.border_radius.all(5),
+                shadow=ft.BoxShadow(blur_radius=5, color="black", spread_radius=1),
+                expand=True  # Faz o container ocupar todo o espaço horizontal
             )
         )
         tarefa_row.update()
