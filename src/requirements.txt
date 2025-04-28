@@ -1,0 +1,7 @@
+flet==0.27.5
+flet-web==0.27.5
+flet-desktop==0.27.5
+flet-cli==0.27.5
+SQLAlchemy==2.0.38
+python-dotenv==1.0.1
+PyMySQL==1.1.1

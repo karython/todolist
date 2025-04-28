@@ -1,26 +1,34 @@
-from sqlalchemy.orm import declarative_base
-from sqlalchemy import Column, String, Integer, Boolean, DateTime
-from datetime import datetime
+# Importando as classes necessárias do SQLAlchemy
+from sqlalchemy.orm import declarative_base  # Para criar a classe base das tabelas (ORM)
+from sqlalchemy import Column, Text, Integer, Boolean  # Tipos de coluna utilizados para definir os campos das tabelas
 
+# Cria a classe base que será utilizada para definir os modelos do banco de dados
 Base = declarative_base()
 
+# Definindo a classe 'Tarefa' que mapeia a tabela 'tb_tarefa_jvgaleguin' no banco de dados
 class Tarefa(Base):
-    __tablename__ = "neguebapietro"
+    # Nome da tabela no banco de dados
+    __tablename__ = 'tb_tarefa_jessegaleguin'
 
+    # Definindo as colunas da tabela
+
+    # Coluna de ID, que é chave primária e autoincrementada
     id = Column(Integer, primary_key=True, autoincrement=True)
-    descricao = Column(String, nullable=False)
-    situacao = Column(Boolean, default=False)
-    data_adicionada = Column(DateTime, nullable=False)  # Substitui data_hora por data_adicionada
-    data_conclusao = Column(DateTime, nullable=True)    # Mantém data_conclusao
 
-    def __init__(self, descricao, situacao, data_adicionada=None, data_conclusao=None):
+    # Coluna de descrição da tarefa, que é do tipo Texto e pode ser nula
+    descricao = Column(Text, nullable=True)
+
+    # Coluna de situação da tarefa, que é do tipo Booleano e tem valor padrão 'False' (Pendente)
+    situacao = Column(Boolean, default=False)
+
+    data_entrega = Column(Text, nullable=True)  # Coluna para armazenar a data de entrega da tarefa
+
+    # Construtor da classe, inicializando os campos de descrição e situação
+    def __init__(self, descricao, situacao=False, data_entrega=None):
         self.descricao = descricao
         self.situacao = situacao
-        self.data_adicionada = data_adicionada or datetime.now()
-        self.data_conclusao = data_conclusao
-
-    def __repr__(self):
-        return f"<Tarefa(id={self.id}, descricao={self.descricao}, situacao={self.situacao}, data_adicionada={self.data_adicionada}, data_conclusao={self.data_conclusao})>"
-
+        self.data_entrega = data_entrega
+# Função para criar as tabelas no banco de dados
 def create_tables(engine):
+    # Cria todas as tabelas definidas pela classe Base (ou seja, as tabelas que herdam de Base)
     Base.metadata.create_all(engine)
