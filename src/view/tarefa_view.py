@@ -48,8 +48,8 @@ class TarefaView:
 
         # Botão para voltar à tela inicial
         back_button = ft.Container(
-            width=150,
-            height=self.page.height * 0.08,  # Altura adaptativa baseada no tamanho da página
+            width=120,  # Mesmo tamanho que o botão "Excluir"
+            height=50,  # Mesmo tamanho que o botão "Excluir"
             alignment=ft.alignment.center,
             bgcolor="#6E6E6E",
             border=ft.border.all(1, "#5C5C5C"),
@@ -66,7 +66,6 @@ class TarefaView:
                 color="white",
                 elevation=0
             ),
-            margin=ft.margin.only(top=5),  # Move o botão mais para cima
             on_hover=lambda e: self._on_hover(e)
         )
 
@@ -75,39 +74,38 @@ class TarefaView:
             controls=[
                 ft.Container(
                     content=self.tarefas_list,
-                    height=self.page.height * 0.25,  # Reduz a altura da lista para subir os botões
+                    height=self.page.height * 0.6,  # Mantém a altura da lista
                     alignment=ft.alignment.center,
-                    margin=ft.margin.symmetric(horizontal=20, vertical=1),  # Adiciona margem vertical para mover mais para cima
+                    margin=ft.margin.symmetric(horizontal=20, vertical=1),
                     border_radius=10,
                     padding=5
                 ),
-                self._create_footer(),
-                back_button  # Adiciona o botão "Voltar"
+                self._create_footer(back_button)  # Passa o botão "Voltar" para o rodapé
             ],
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,  # Centraliza horizontalmente
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             scroll=ft.ScrollMode.AUTO,
             expand=True,
-            spacing=2  # Reduz ainda mais o espaçamento entre os elementos
+            spacing=2
         )
         
         # Adiciona apenas o main_content à página
         self.page.controls.clear()
-        self.page.add(ft.Stack([background_image, main_content]))  # Remove a imagem à direita
-        self.page.update()  # Atualiza a página para refletir as mudanças
+        self.page.add(ft.Stack([background_image, main_content]))
+        self.page.update()
 
         # Atualiza a lista de tarefas após adicionar o main_content
         self.atualizar_lista_tarefas()
 
         return ft.Stack([background_image, main_content])
     
-    def _create_footer(self):
-        """Cria o rodapé centralizado com o botão de excluir"""
+    def _create_footer(self, back_button):
+        """Cria o rodapé centralizado com os botões de excluir e voltar"""
         return ft.Container(
             content=ft.Row(
                 [
                     ft.Container(
                         width=120,
-                        height=self.page.height * 0.08,  # Altura adaptativa baseada no tamanho da página
+                        height=50,
                         alignment=ft.alignment.center,
                         bgcolor="#6E6E6E",
                         border=ft.border.all(1, "#5C5C5C"),
@@ -120,19 +118,21 @@ class TarefaView:
                                     ft.Text("Excluir", font_family="Mine", size=14, color="white")
                                 ],
                                 alignment=ft.MainAxisAlignment.CENTER,
-                                spacing=10
+                                spacing=5
                             ),
-                            on_click=self.on_excluir_tarefa_click,  # Corrige o evento do botão
+                            on_click=self.on_excluir_tarefa_click,
                             bgcolor="transparent",
                             color="white",
                             elevation=0
                         ),
-                        on_hover=lambda e: self._on_hover(e)  # Adiciona o evento de hover
-                    )
+                        on_hover=lambda e: self._on_hover(e)
+                    ),
+                    ft.Container(width=20),  # Espaçamento entre os botões
+                    back_button  # Adiciona o botão "Voltar" ao rodapé
                 ],
                 alignment=ft.MainAxisAlignment.CENTER
             ),
-            padding=ft.padding.only(top=1)  # Espaço acima do botão
+            padding=ft.padding.only(top=100)  # Move os botões mais para baixo
         )
 
     def _on_hover(self, e):
@@ -281,9 +281,6 @@ class TarefaView:
 
         self.editing_task_id = tarefa.id  # Define a tarefa atual como em edição
         descricao_input = ft.TextField(
-            width=271,  # Largura fixa para o campo de descrição
-            bgcolor="black",  # Cor de fundo preto
-            border_color="white",  # Cor da borda branca
             value=tarefa.descricao,
             expand=False,  # Remove o comportamento de expansão para alinhar melhor
             text_align="start",  # Alinha o texto à esquerda
@@ -292,14 +289,6 @@ class TarefaView:
             max_lines=None  # Sem limite de linhas
         )
         error_text = ft.Text(value="", color="white", weight="bold")  # Alterado para branco
-        spacing_between_buttons = 38  # Variável para controlar o espaçamento entre os botões
-
-        # Remove todas as checkboxes para expandir a caixa de edição
-        for item in self.tarefas_list.controls:
-            if isinstance(item.content, ft.Row):
-                row = item.content
-                row.controls = [control for control in row.controls if not isinstance(control, ft.Checkbox)]
-                row.update()
 
         def salvar_edicao(e):
             if descricao_input.value.strip() == "":
@@ -346,7 +335,7 @@ class TarefaView:
                                     on_click=salvar_edicao  # Chama a função de salvar
                                 )
                             ),
-                            ft.Container(width=spacing_between_buttons),  # Espaçamento configurável entre os botões
+                            ft.Container(width=50),  # Adiciona um espaçamento fixo entre os botões
                             ft.Container(
                                 width=100,
                                 height=40,  # Define altura menor para tornar o botão mais compacto
@@ -369,7 +358,6 @@ class TarefaView:
             )
         )
         tarefa_row.update()
-
 
     def abrir_edicao_data(self, e, tarefa):
         """Abre o calendário para editar a data da tarefa"""
