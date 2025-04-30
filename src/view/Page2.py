@@ -5,7 +5,8 @@ class Page2:
     def __init__(self, page: ft.Page):
         super().__init__()
         self.page = page
-        page.theme = ft.Theme(font_family="MarioText")
+        self.page.theme = ft.Theme(font_family="MarioText")
+        self.page.bgcolor = ft.Colors.TRANSPARENT
 
     def construir(self):
         # Configurações iniciais da página
@@ -102,6 +103,6 @@ class Page2:
 
         # Atualiza a lista de tarefas ao carregar a página
         atualizar_lista_tarefas(tarefas_list)
-        background_image.content.height = len(tarefas_list.controls)*1.8*(tarefas_list.spacing + self.page.padding)
+        background_image.content.height = max(len(tarefas_list.controls)*1.8*(tarefas_list.spacing + self.page.padding), self.page.height)
         background_image.update()
         self.page.update()

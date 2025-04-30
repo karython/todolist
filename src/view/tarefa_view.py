@@ -221,7 +221,7 @@ def excluir(e, tarefa, tarefas_list):
     # Cria um modal de confirmação
     modal = ft.AlertDialog(
         title=ft.Text("Confirmação"),
-        content=ft.Text("Você tem certeza que deseja excluir esta tarefa?"),
+        content=ft.Text("Tem certeza que deseja excluir essa tarefa?"),
         actions=[
             ft.ElevatedButton(
                 text="Sim",

@@ -5,7 +5,8 @@ class Page1:
     def __init__(self, page: ft.Page):
         super().__init__()
         self.page = page
-        page.theme = ft.Theme(font_family="MarioText")
+        self.page.theme = ft.Theme(font_family="MarioText")
+        self.page.bgcolor = ft.Colors.TRANSPARENT
     
     def construir(self):
         self.page.title = "Cadastro de Tarefa"
