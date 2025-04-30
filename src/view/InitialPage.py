@@ -4,7 +4,7 @@ class InitialPage:
     def __init__(self, page: ft.Page):
         super().__init__()
         self.page = page
-        page.theme = ft.Theme(font_family="MarioText")
+        self.page.theme = ft.Theme(font_family="MarioText")
     
     def construir(self):
         self.page.title = "To Do List"
@@ -12,18 +12,7 @@ class InitialPage:
         self.page.theme_mode = ft.ThemeMode.DARK
         self.page.vertical_alignment = ft.MainAxisAlignment.CENTER
         self.page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-        
-        background_video = ft.Video(
-            playlist=[ft.VideoMedia(resource='C:\\Users\\ead\\Documents\\Philipi\\Aulas\\Flet\\ToDoList\\src\\assets\\vids\\Super Mario World.mp4')],
-            playlist_mode=ft.PlaylistMode.LOOP,
-            show_controls=False,
-            autoplay=True,
-            width=self.page.width,
-            height=self.page.height,
-            fit=ft.ImageFit.COVER,
-            on_loaded=lambda _: background_video.play(),
-            on_error=lambda e: print(f"Error loading video: {e.data}")
-        )
+        self.page.bgcolor = '#0063BD'
 
         def hover(e):
             if e.data == "true":
@@ -34,10 +23,7 @@ class InitialPage:
 
         img = ft.Image(src="/imgs/setaMario.png", width=15, height=15, visible=False)
 
-        self.page.add(ft.Stack(
-            controls=[
-                background_video,
-                ft.Column(
+        self.page.add(ft.Column(
                     controls=[
                         ft.Image(
                             src="/imgs/TituloInicial.png",
@@ -54,7 +40,7 @@ class InitialPage:
                             ),
                             on_hover=lambda e: hover(e),
                             on_click=lambda _: self.page.go("/cadastro"),
-                            bgcolor=ft.Colors.BLUE_300,
+                            bgcolor=ft.Colors.TRANSPARENT,
                             width=300,
                             height=50,
                             border_radius=10,
@@ -62,8 +48,5 @@ class InitialPage:
                         )
                     ],
                 ),
-            ]
         )
-        )
-        background_video.play()
         self.page.update()

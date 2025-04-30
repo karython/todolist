@@ -8,9 +8,10 @@ def main(page: ft.Page):
     page.title = "ToDo List"
     page.vertical_alignment = ft.MainAxisAlignment.START
 
-    page.fonts = {"MarioTitle": '/fonts/RetroMario.otf',
-                  "MarioText": '/fonts/SMW_TextBox.ttf'}
-    
+    page.fonts = {
+        "MarioText": "/fonts/SMW_TextBox.ttf",
+    }
+
     page.theme = ft.Theme(font_family="MarioText")
 
     # Função para construir a página com base na rota
