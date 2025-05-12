@@ -5,3 +5,4 @@ flet-cli==0.27.5
 SQLAlchemy==2.0.38
 python-dotenv==1.0.1
 PyMySQL==1.1.1
+pillow==11.1.0

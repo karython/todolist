@@ -1,26 +1,19 @@
 from sqlalchemy.orm import declarative_base
-from sqlalchemy import Column, String, Integer, Boolean, DateTime
-from datetime import datetime
+from sqlalchemy import Column, Text, Integer, Date
 
 Base = declarative_base()
 
 class Tarefa(Base):
-    __tablename__ = "neguebapietro"
+    __tablename__ = 'tb_tarefas_mine'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    descricao = Column(String, nullable=False)
-    situacao = Column(Boolean, default=False)
-    data_adicionada = Column(DateTime, nullable=False)  # Substitui data_hora por data_adicionada
-    data_conclusao = Column(DateTime, nullable=True)    # Mantém data_conclusao
+    descricao = Column(Text, nullable=True)
+    dt = Column(Date, nullable=True)  # Coluna para a data de vencimento
 
-    def __init__(self, descricao, situacao, data_adicionada=None, data_conclusao=None):
+    def __init__(self, descricao, dt=None):
         self.descricao = descricao
-        self.situacao = situacao
-        self.data_adicionada = data_adicionada or datetime.now()
-        self.data_conclusao = data_conclusao
+        self.dt = dt
 
-    def __repr__(self):
-        return f"<Tarefa(id={self.id}, descricao={self.descricao}, situacao={self.situacao}, data_adicionada={self.data_adicionada}, data_conclusao={self.data_conclusao})>"
 
 def create_tables(engine):
     Base.metadata.create_all(engine)
